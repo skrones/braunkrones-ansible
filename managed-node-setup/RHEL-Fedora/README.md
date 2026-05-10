@@ -18,8 +18,8 @@ The `managed-node-setup.sh` script automates the setup of a Fedora or RHEL machi
 Download the script and configuration file from the GitHub repository:
 
 ```bash
-wget https://raw.githubusercontent.com/braunkrones/braunkrones-ansible/main/managed-node-setup/RHEL-Fedora/managed-node-setup.sh
-wget https://raw.githubusercontent.com/braunkrones/braunkrones-ansible/main/managed-node-setup/RHEL-Fedora/managed-node-setup.yaml
+wget https://raw.githubusercontent.com/skrones/braunkrones-ansible/main/managed-node-setup/RHEL-Fedora/managed-node-setup.sh
+wget https://raw.githubusercontent.com/skrones/braunkrones-ansible/main/managed-node-setup/RHEL-Fedora/managed-node-setup.yaml
 chmod +x managed-node-setup.sh
 ```
 
@@ -108,4 +108,4 @@ Use YAML configuration:
 
 ## Contributing
 
-Please report issues or submit pull requests to the [GitHub repository](https://github.com/braunkrones/braunkrones-ansible).
+Please report issues or submit pull requests to the [GitHub repository](https://github.com/skrones/braunkrones-ansible).
