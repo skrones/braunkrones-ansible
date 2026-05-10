@@ -1,4 +1,4 @@
-# Braunkrones Ansible Configuration
+# Braunkrones Linux Machine First Use Setup
 
 Automated Linux environment setup with SSH hardening and fail2ban protection.
 
