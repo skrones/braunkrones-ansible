@@ -1,256 +1,111 @@
-# Braunkrones Linux Machine First Use Setup
+# Managed Node Setup
 
-Automated Linux environment setup with SSH hardening and fail2ban protection.
+This script performs initial configuration of a Fedora/RHEL machine for Ansible management.
 
 ## Overview
 
-This repository contains a comprehensive bash script designed for initial setup of RHEL/Fedora-based Linux desktops. The script automates the following tasks:
+The `managed-node-setup.sh` script automates the setup of a Fedora or RHEL machine as an Ansible-managed node. It installs OpenSSH server, configures SSH for key-based authentication, creates a dedicated Ansible user, installs SSH public keys from GitHub, and grants sudo privileges to the user.
 
-- **System Updates**: Updates and upgrades all system packages
-- **SSH Installation**: Installs and configures OpenSSH server
-- **GitHub Key Import**: Automatically imports your public SSH keys from GitHub
-- **SSHD Hardening**: Applies security best practices to SSH configuration
-- **fail2ban Setup**: Installs and configures fail2ban for brute-force protection
+## Prerequisites
 
-## Features
-
-### Security Hardening
-
-The script implements industry-standard SSH security measures:
-
-- **Disables password authentication** - Forces public key authentication only
-- **Disables root login** - Prevents direct root SSH access
-- **Disables X11 forwarding** - Reduces attack surface
-- **Disables empty passwords** - Ensures strong authentication
-- **Session timeout** - Auto-disconnects idle sessions after 5 minutes
-- **Disables agent/TCP forwarding** - Prevents unauthorized tunneling
-
-### fail2ban Protection
-
-Monitors SSH authentication logs and temporarily bans IPs with failed login attempts:
-
-- **Ban duration**: 1 hour
-- **Threshold**: 5 failed attempts within 10 minutes
-- **Monitoring**: Real-time tracking of authentication failures
-
-### Non-Destructive Configuration
-
-The script preserves your system's vendor SSH configuration:
-
-- Creates a new include file (`/etc/ssh/sshd_config.d/99-hardening.conf`) instead of modifying the original
-- Original `/etc/ssh/sshd_config` remains unchanged
-- Easy to review, modify, or remove hardening settings
-
-### Comprehensive Logging
-
-All operations are logged to `/var/log/setup.log` with timestamps for troubleshooting and auditing.
-
-## Requirements
-
-- **Operating System**: RHEL/Fedora-based systems (CentOS, Fedora, Rocky Linux, AlmaLinux, etc.)
-- **Privileges**: Must be run as root or with `sudo`
-- **Network**: Internet connectivity to reach `github.com`
-- **GitHub Account**: A public GitHub account with SSH keys configured
+- Fedora or RHEL operating system
+- Root privileges (run as root or with sudo)
+- Internet access for package installation and GitHub key fetching
+- A GitHub account with SSH public keys uploaded
 
 ## Installation
 
-Run Directly via Curl (Recommended for First-Time Setup)
-
-Run the script directly from the repository without downloading:
+Download the script and configuration file from the GitHub repository:
 
 ```bash
-# Replace 'your_github_username' with your actual GitHub username
-sudo bash <(curl -fsSL https://raw.githubusercontent.com/yourusername/braunkrones-ansible/main/Setup/setup.sh) your_github_username
+wget https://raw.githubusercontent.com/braunkrones/braunkrones-ansible/main/managed-node-setup/RHEL-Fedora/managed-node-setup.sh
+wget https://raw.githubusercontent.com/braunkrones/braunkrones-ansible/main/managed-node-setup/RHEL-Fedora/managed-node-setup.yaml
+chmod +x managed-node-setup.sh
 ```
-
-**Note**: Adjust the GitHub repository URL to match your actual repository location.
 
 ## Usage
 
-### Basic Syntax
+### Basic Usage
+
+Create a password file for the new user:
 
 ```bash
-sudo ./setup.sh <github_username>
+echo "your_password_here" > /tmp/ansible_passwd.txt
+chmod 600 /tmp/ansible_passwd.txt
 ```
 
-### Arguments
+Run the script with required arguments:
 
-- `<github_username>` (required): Your GitHub username whose public SSH keys will be imported
+```bash
+./managed-node-setup.sh -g <github_username> -p /tmp/ansible_passwd.txt
+```
 
-### Options
+### Command-Line Options
 
-- `-h, --help`: Display help message and exit
+- `-c <config_file>`: SSH config file name in `/etc/ssh/sshd_config.d/` (default: `managed-node-setup.conf`)
+- `-u <username>`: Username for the new user (default: `ansible`)
+- `-p <password_file>`: Path to file containing the password for the new user (required)
+- `-g <github_username>`: GitHub username to fetch SSH public keys from (required)
+- `-s <sudo_policy>`: Sudo policy for the new user (default: `ALL=(ALL) NOPASSWD: ALL`)
+- `-h`: Show help message
+
+### Configuration File
+
+The script checks for `managed-node-setup.yaml` in the same directory. If present, it loads preset values from the file. Command-line options override YAML presets.
+
+Example `managed-node-setup.yaml`:
+
+```yaml
+username: ansible
+password_file: /tmp/ansible_passwd.txt
+github_username: your_github_username
+sudo_policy: ALL=(ALL) NOPASSWD: ALL
+```
 
 ### Examples
 
-```bash
-# Basic usage
-sudo ./setup.sh myusername
-
-# With help flag
-sudo ./setup.sh -h
-
-# Via curl
-sudo bash <(curl -fsSL https://raw.githubusercontent.com/yourusername/braunkrones-ansible/main/Setup/setup.sh) myusername
-```
-
-## What Gets Installed
-
-The script installs the following packages on your system:
-
-- `openssh-server` - SSH server daemon
-- `openssh-clients` - SSH client utilities
-- `curl` - For downloading SSH keys from GitHub
-- `fail2ban` - Intrusion prevention framework
-- `fail2ban-systemd` - fail2ban systemd integration
-
-## Configuration Files
-
-The script creates or modifies the following files:
-
-| File | Purpose |
-|------|---------|
-| `/root/.ssh/authorized_keys` | Imported public SSH keys from GitHub |
-| `/etc/ssh/sshd_config.d/99-hardening.conf` | SSH hardening configuration |
-| `/etc/fail2ban/jail.d/sshd.local` | fail2ban SSHD jail rules |
-| `/var/log/setup.log` | Setup script execution log |
-
-## Verification
-
-After running the script, verify the setup was successful:
-
-### Check SSH Service Status
+Create a user named `ansible` with default settings:
 
 ```bash
-systemctl status sshd
+./managed-node-setup.sh -g mygithubuser -p /tmp/ansible_passwd.txt
 ```
 
-Expected output should show `active (running)` and `enabled`.
-
-### Verify SSH Keys Were Imported
+Create a user named `myuser` with custom config:
 
 ```bash
-wc -l ~/.ssh/authorized_keys
-cat ~/.ssh/authorized_keys
+./managed-node-setup.sh -u myuser -c myconfig.conf -g mygithubuser -p /tmp/ansible_passwd.txt
 ```
 
-### Verify SSHD Hardening
+Use YAML configuration:
 
 ```bash
-grep -E 'PasswordAuthentication|PermitRootLogin|ClientAliveInterval' /etc/ssh/sshd_config.d/99-hardening.conf
+# Edit managed-node-setup.yaml with your values
+./managed-node-setup.sh
 ```
 
-Expected output:
-```
-PasswordAuthentication no
-PermitRootLogin no
-ClientAliveInterval 300
-```
+## What the Script Does
 
-### Check fail2ban Status
+1. Installs OpenSSH server using `dnf` or `yum`
+2. Starts and enables the SSH service
+3. Creates a new SSH configuration file in `/etc/ssh/sshd_config.d/` to enable key-based authentication
+4. Creates a new user with the specified username and password
+5. Fetches SSH public keys from the specified GitHub user's account and installs them for both the executing user and the new user
+6. Creates a sudo policy file in `/etc/sudoers.d/` granting the specified privileges to the new user
+7. Restarts the SSH service to apply configuration changes
 
-```bash
-fail2ban-client status
-fail2ban-client status sshd
-```
+## Security Notes
 
-Should show `sshd` jail is enabled and active.
-
-### Test SSH Connection
-
-From another machine with one of your SSH private keys:
-
-```bash
-ssh -i ~/.ssh/your_private_key root@<your_server_ip>
-```
-
-This should connect without requiring a password.
+- The password file should be secured with appropriate permissions and deleted after use
+- SSH keys are fetched from GitHub and added to `authorized_keys` files
+- The sudo policy grants passwordless sudo access; adjust as needed for your security requirements
 
 ## Troubleshooting
 
-### Script Fails Due to Missing GitHub Username
-
-**Error**: `GitHub username argument is required`
-
-**Solution**: Ensure you provide your GitHub username as an argument:
-```bash
-sudo ./setup.sh your_github_username
-```
-
-### No SSH Keys Found
-
-**Error**: `No SSH keys found for GitHub user ...`
-
-**Solution**: 
-1. Verify the GitHub username is correct
-2. Ensure you have public SSH keys on GitHub (https://github.com/username/keys)
-3. Verify internet connectivity to github.com
-
-### SSH Connection Fails
-
-**Error**: Connection refused or timeout
-
-**Solution**:
-1. Verify SSHD is running: `systemctl status sshd`
-2. Check SSH configuration: `sshd -t`
-3. Review logs: `tail -20 /var/log/setup.log`
-4. Check firewall: `sudo firewall-cmd --list-all` or `sudo iptables -L`
-
-### fail2ban Not Protecting
-
-**Error**: fail2ban service not active
-
-**Solution**:
-1. Check status: `systemctl status fail2ban`
-2. Restart service: `sudo systemctl restart fail2ban`
-3. Review logs: `sudo tail -20 /var/log/fail2ban.log`
-
-## Logging
-
-All script operations are logged to `/var/log/setup.log`. View the log:
-
-```bash
-tail -50 /var/log/setup.log
-```
-
-For real-time monitoring:
-
-```bash
-sudo tail -f /var/log/setup.log
-```
-
-## Security Considerations
-
-- The script disables password authentication completely. Ensure you have SSH keys configured before running.
-- Root login is disabled. Use a non-root account with sudo privileges for ongoing administration.
-- Session timeouts are set to 5 minutes of inactivity. Adjust in `/etc/ssh/sshd_config.d/99-hardening.conf` if needed.
-- fail2ban bans IPs for 1 hour after 5 failed attempts. Monitor ban status to avoid accidental lockouts.
-
-## Reverting Changes
-
-If you need to revert the SSH hardening:
-
-```bash
-# Remove the hardening configuration
-sudo rm /etc/ssh/sshd_config.d/99-hardening.conf
-
-# Reload SSHD
-sudo systemctl reload sshd
-```
-
-## Support
-
-For issues or questions, please check the following:
-
-1. Review the script log: `cat /var/log/setup.log`
-2. Verify system requirements are met
-3. Ensure GitHub account and SSH keys are properly configured
-4. Check system firewall and network connectivity
-
-## License
-
-MIT License - See repository for details
+- Ensure you have root privileges
+- Check that the password file exists and is readable
+- Verify GitHub username has public SSH keys
+- Review system logs for any errors during execution
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues or pull requests.
+Please report issues or submit pull requests to the [GitHub repository](https://github.com/braunkrones/braunkrones-ansible).

@@ -1,0 +1,20 @@
+# managed-node-setup.yaml
+#
+# Configuration file for managed-node-setup.sh
+# This file is optional. If present, it provides default values that can be overridden by command-line arguments.
+# Uncomment and modify the lines below as needed.
+
+# SSH config file name in /etc/ssh/sshd_config.d/
+# config_file: managed-node-setup.conf
+
+# Username for the new user
+# username: ansible
+
+# Path to file containing the password for the new user
+# password_file: /tmp/ansible_passwd.txt
+
+# GitHub username to fetch SSH public keys from
+# github_username: your_github_username
+
+# Sudo policy for the new user
+# sudo_policy: ALL=(ALL) NOPASSWD: ALL
