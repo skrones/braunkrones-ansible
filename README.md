@@ -1,6 +1,6 @@
 # Braunkrones Ansible Configuration
 
-Automated Linux desktop environment setup with SSH hardening and fail2ban protection.
+Automated Linux environment setup with SSH hardening and fail2ban protection.
 
 ## Overview
 
@@ -54,21 +54,7 @@ All operations are logged to `/var/log/setup.log` with timestamps for troublesho
 
 ## Installation
 
-### Option 1: Download and Run Directly
-
-```bash
-# Clone or download the repository
-git clone https://github.com/yourusername/braunkrones-ansible.git
-cd braunkrones-ansible/Setup
-
-# Make the script executable
-chmod +x setup.sh
-
-# Run the setup script with your GitHub username
-sudo ./setup.sh your_github_username
-```
-
-### Option 2: Run Directly via Curl (Recommended for First-Time Setup)
+Run Directly via Curl (Recommended for First-Time Setup)
 
 Run the script directly from the repository without downloading:
 
@@ -78,14 +64,6 @@ sudo bash <(curl -fsSL https://raw.githubusercontent.com/yourusername/braunkrone
 ```
 
 **Note**: Adjust the GitHub repository URL to match your actual repository location.
-
-### Option 3: Run with a Specific GitHub User
-
-If you want to import SSH keys from a GitHub user different from the repository owner:
-
-```bash
-sudo bash <(curl -fsSL https://raw.githubusercontent.com/yourusername/braunkrones-ansible/main/Setup/setup.sh) different_github_username
-```
 
 ## Usage
 
