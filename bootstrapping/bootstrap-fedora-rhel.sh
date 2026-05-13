@@ -45,3 +45,6 @@ main() {
     clone_ansible_repo
     echo "Bootstrap completed successfully." >&2
 }
+
+main
+

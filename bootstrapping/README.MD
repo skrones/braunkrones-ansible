@@ -1,2 +1,2 @@
 # Fedora/RHEL
-` 
+` curl 
