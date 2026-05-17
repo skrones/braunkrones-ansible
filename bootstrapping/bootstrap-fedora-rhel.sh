@@ -80,5 +80,5 @@ main() {
     echo "Bootstrap completed successfully." >&2
 }
 
-main()
+main
 
