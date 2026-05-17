@@ -7,8 +7,7 @@
     - role: user_create
       vars:
         user_name: "ansible"
-        system_user: true
-        create_home: true
+        system: true
         group: wheel
         sudo_policy: "ansible ALL=(ALL) NOPASSWD:ALL"
         user_password: "{{ ansible_user_pass }}"

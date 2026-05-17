@@ -2,6 +2,8 @@
 #
 # Bootstrap script automating the initial configuration of a Fedora/RHEL machine for ansible management & control.
 
+set -euo pipefail
+
 check_not_root() {
     if [ "$(id -u)" -eq 0 ]; then
         echo "Do not run this script with sudo. Run it as your normal user; it will ask for sudo when needed." >&2
@@ -47,11 +49,6 @@ install_packages() {
             echo "$package is already installed." >&2
         fi
     done
-}
-
-init_pipx() {
-    python -m pipx ensurepath
-    export PATH="$HOME/.local/bin:$PATH"
 }
 
 install_poetry() {
