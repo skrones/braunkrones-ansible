@@ -1,0 +1,24 @@
+- name: Look up target user
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ ssh_key_user }}"
+
+- name: Ensure target user's .ssh directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts.getent_passwd[ssh_key_user][4] }}/.ssh"
+    state: directory
+    owner: "{{ ssh_key_user }}"
+    mode: "0700"
+
+- name: Create SSH key pair
+  community.crypto.openssh_keypair:
+    path: "{{ ansible_facts.getent_passwd[ssh_key_user][4] }}/.ssh/id_ed25519"
+    type: ed25519
+    owner: "{{ ssh_key_user }}"
+    mode: "0600"
+    comment: "{{ ssh_key_user }}@{{ inventory_hostname }}"
+    regenerate: never
+
+- name: Upload public key to GitHub
+  community.general.github_key:
+    token: "{{ github

@@ -1,0 +1,45 @@
+- hosts: localhost
+  become: true
+  roles:
+
+    # Needs to be created
+    #- role: user_create
+    #  vars:
+    #    user_name: ansible
+    #    system_user: true
+    #    sudo_policy: "ansible ALL=(ALL) NOPASSWD:ALL"
+
+    # Needs to be created
+    #- role: sshd_install
+
+    # Needs to be created
+    #- role: ssh_create_keypair
+    #  vars:
+    #    ssh_key_user: ansible
+    #    type: ed25519
+    #    comment: "ansible@{{ inventory_hostname }}"
+    #    regenerate: never
+
+    # Needs to be created
+    #- role: ssh_create_keypair
+    #  vars:
+    #    ssh_key_user: skrones
+    #    type: ed25519
+    #    comment: "skrones@{{ inventory_hostname }}"
+    #    regenerate: never
+
+    # Needs to be created
+    #- role: ssh_key_upload
+    #  vars:
+    #    ssh_key_user: ansible
+    #    comment: "ansible@{{ inventory_hostname }}"
+    
+    # Needs to be created
+    # - role: ssh_key_upload
+    #  vars:
+    #    ssh_key_user: skrones
+    #    comment: "skrones@{{ inventory_hostname }}"
+
+    # Needs to be created
+    #- role: sshd_configure
+    
