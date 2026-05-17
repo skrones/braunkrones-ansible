@@ -19,9 +19,9 @@ check_for_package_manager() {
 }
 
 packages=(
-    "ansible"
     "git"
     "python"
+    "pipx"
 )
 
 install_packages() {
@@ -35,17 +35,50 @@ install_packages() {
     done
 }
 
+install_poetry() {
+    if ! command -v poetry >/dev/null 2>&1; then
+        echo "Installing poetry..." >&2
+        pipx install poetry
+    else
+        echo "poetry is already installed." >&2
+    fi
+}
+
 clone_ansible_repo() {
     git clone https://github.com/skrones/braunkrones-ansible
+}
+
+enter_repo() {
+    cd braunkrones-ansible
+}
+
+init_poetry() {
+    if [ -f "pyproject.toml" ]; then
+        poetry install
+    else
+        echo "No pyproject.toml found. Please verify integrity of the repository." >&2
+        exit 1
+    fi
+}
+
+run_ansible_system_bootstrap() {
+    if ! poetry run ansible-playbook playbooks/system-bootstrap.yml --ask-become-pass --ask-vault-pass; then
+        echo "Ansible playbook execution failed. Please check the output for details." >&2
+        exit 1
+    fi
 }
 
 main() {
     check_for_privledged_user
     check_for_package_manager
     install_packages
+    install_poetry
     clone_ansible_repo
+    enter_repo
+    init_poetry
+    run_ansible_system_bootstrap
     echo "Bootstrap completed successfully." >&2
 }
 
-main
+main()
 
