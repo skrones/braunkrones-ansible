@@ -1,5 +1,0 @@
-- name: Upgrade all packages to the latest version
-  ansible.builtin.dnf5:
-    name: "*"
-    state: latest
-    update_cache: yes

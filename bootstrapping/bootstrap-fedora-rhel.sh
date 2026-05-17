@@ -21,6 +21,7 @@ check_for_package_manager() {
 packages=(
     "ansible"
     "git"
+    "python"
 )
 
 install_packages() {

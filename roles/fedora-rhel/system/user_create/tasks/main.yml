@@ -1,3 +1,0 @@
-name: Creates a new user
-  ansible.builtin.user:
-    password: "{{ user_password | password_hash('sha512') }}"
