@@ -2,10 +2,10 @@
   ansible.builtin.user:
     name: "{{ user_name }}"
     password: "{{ user_password }}"
-    system: {{ system | default(false) }}
-    group: "{{ group | default(omit) }}"
+    system: "{{ system | default(false) }}"
+    groups: "{{ group | default(omit) }}"
     append: true
-    create_home: {{ create_home | default(true) }}
+    create_home: "{{ create_home | default(true) }}"
 
 
 - name: configures sudo policy for the user
