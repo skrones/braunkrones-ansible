@@ -1,0 +1,12 @@
+- name: Creates a new user
+  ansible.builtin.user:
+    name: "{{ user_name }}"
+    password: "{{ user_password }}"
+
+- name: configures sudo policy for the user
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ user_name }}"
+    content: "{{ sudo_policy }}"
+    owner: root
+    group: root
+    mode: '0440'

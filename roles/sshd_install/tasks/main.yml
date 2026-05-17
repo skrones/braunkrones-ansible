@@ -1,0 +1,12 @@
+- name: Install OpenSSH Server
+  ansible.builtin.dnf5:
+    name: openssh-server
+    state: present
+    update_cache: yes
+
+- name: Start & Enable SSHD Service
+  ansible.builtin.systemd:
+    name: sshd
+    state: started
+    enabled: yes
+
