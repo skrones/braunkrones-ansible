@@ -97,7 +97,6 @@ main() {
     init_sudo
     check_for_package_manager
     install_packages
-    init_pipx
     install_poetry
     clone_ansible_repo
     enter_repo

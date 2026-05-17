@@ -2,6 +2,11 @@
   ansible.builtin.user:
     name: "{{ user_name }}"
     password: "{{ user_password }}"
+    system: {{ system | default(false) }}
+    group: "{{ group | default(omit) }}"
+    append: true
+    create_home: {{ create_home | default(true) }}
+
 
 - name: configures sudo policy for the user
   ansible.builtin.copy:
