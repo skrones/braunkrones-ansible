@@ -58,8 +58,8 @@ install_packages() {
 }
 
 # Install poetry using pipx if it's not already installed.
+    install_poetry() {
     export PATH="$HOME/.local/bin:$PATH"
-
     if ! command -v poetry >/dev/null 2>&1; then
         echo "Installing poetry..." >&2
         pipx install poetry
