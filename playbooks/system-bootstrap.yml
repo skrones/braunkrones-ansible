@@ -4,13 +4,15 @@
     - ../secrets.yml
   vars_prompt:
     - name: host_name
-        prompt: "Enter the hostname for the system"
+      prompt: "Enter the hostname for the system"
 
-    - task: Set system hostname
+  tasks:
+    - name: Set system hostname
       ansible.builtin.hostname:
-      name: "{{ host_name }}"
+        name: "{{ host_name }}"
       become: true
 
+  roles:
     - role: user_create
       vars:
         user_name: "ansible"
@@ -21,24 +23,23 @@
 
     - role: sshd_install
 
-    # Needs to be created
-    #- role: ssh_create_keypair
-    #  vars:
-    #    ssh_key_user: ansible
-    #    type: ed25519
-    #    comment: "ansible@{{ inventory_hostname }}"
-    #    regenerate: never
+    
+    - role: ssh_create_keypair
+      vars:
+        ssh_key_user: ansible
+        type: ed25519
+        comment: "ansible@{{ inventory_hostname }}"
+        regenerate: never
+
+    - role: ssh_create_keypair
+      vars:
+        ssh_key_user: skrones
+        type: ed25519
+        comment: "skrones@{{ inventory_hostname }}"
+        regenerate: never
 
     # Needs to be created
-    #- role: ssh_create_keypair
-    #  vars:
-    #    ssh_key_user: skrones
-    #    type: ed25519
-    #    comment: "skrones@{{ inventory_hostname }}"
-    #    regenerate: never
-
-    # Needs to be created
-    #- role: ssh_key_upload
+    #- role: ssh_key_sync
     #  vars:
     #    ssh_key_user: ansible
     #    comment: "ansible@{{ inventory_hostname }}"
