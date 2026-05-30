@@ -44,4 +44,3 @@ Store `tailscale_authkey` in `secrets.yml`, Ansible Vault, or another protected 
 | `tailscale_insecurely_log_authkey` | `false` | Allow the collection role to log the raw auth key while debugging failures. |
 | `tailscale_auth_key_in_state` | `true` | Store a hashed auth key in Ansible state so auth key changes rerun `tailscale up`. |
 | `tailscale_manage_binaries_skip` | `false` | Skip package install/removal and only manage Tailscale configuration. |
-*** End Patch

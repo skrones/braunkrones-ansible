@@ -32,13 +32,6 @@
         comment: "ansible@{{ inventory_hostname }}"
         regenerate: never
 
-    - role: ssh_create_keypair
-      vars:
-        ssh_key_user: skrones
-        type: ed25519
-        comment: "skrones@{{ inventory_hostname }}"
-        regenerate: never
-
     - role: ssh_sync_authorised-users
       vars: 
         ssh_key_user: ansible
@@ -53,6 +46,3 @@
           - ansible
         tailscale_oauth_ephemeral: false
         tailscale_oauth_preauthorized: true
-
-    # Needs to be created
-    #- role: sshd_configure
