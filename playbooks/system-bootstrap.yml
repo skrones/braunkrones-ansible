@@ -44,5 +44,13 @@
         ssh_key_user: ansible
         github_key_title_prefix: "ansible@"
 
+    - role: tailscale_configure
+      vars:
+        tailscale_authkey: "{{ tailscale_oauth_client_secret }}"
+        tailscale_tags:
+         - ansible
+        tailscale_oauth_ephemeral: false
+        tailscale_oauth_preauthorized: true
+
     # Needs to be created
     #- role: sshd_configure

@@ -94,6 +94,16 @@ init_poetry() {
     fi
 }
 
+# Install Ansible Galaxy dependencies required by the playbooks.
+install_ansible_requirements() {
+    if [ -f "requirements.yml" ]; then
+        poetry run ansible-galaxy collection install -r requirements.yml
+    else
+        echo "No requirements.yml found. Please verify integrity of the repository." >&2
+        exit 1
+    fi
+}
+
 # Run the ansible playbook.
 run_ansible_system_bootstrap() {
     if ! poetry run ansible-playbook playbooks/system-bootstrap.yml --ask-become-pass --ask-vault-pass; then
@@ -112,6 +122,7 @@ main() {
     clone_ansible_repo
     enter_repo
     init_poetry
+    install_ansible_requirements
     run_ansible_system_bootstrap
     echo "Bootstrap completed successfully." >&2
 }

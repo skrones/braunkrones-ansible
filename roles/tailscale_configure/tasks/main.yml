@@ -1,0 +1,44 @@
+- name: Resolve Tailscale auth key
+  ansible.builtin.set_fact:
+    tailscale_resolved_authkey: "{{ tailscale_authkey | default(tailscale_auth_key | default('')) }}"
+  no_log: true
+
+- name: Resolve Tailscale arguments
+  ansible.builtin.set_fact:
+    tailscale_resolved_args: >-
+      {{
+        (["--hostname=" ~ tailscale_hostname] if tailscale_hostname | length > 0 else [])
+        + (["--accept-routes=" ~ (tailscale_accept_routes | ternary('true', 'false'))] if tailscale_accept_routes is not none else [])
+        + (["--advertise-exit-node"] if tailscale_advertise_exit_node else [])
+        + (["--advertise-routes=" ~ (tailscale_advertise_routes | join(','))] if tailscale_advertise_routes | length > 0 else [])
+        + (["--ssh"] if tailscale_ssh else [])
+        + tailscale_extra_args
+      }}
+
+- name: Install and configure Tailscale
+  ansible.builtin.include_role:
+    name: artis3n.tailscale.machine
+  vars:
+    state: "{{ tailscale_state }}"
+    release_stability: "{{ tailscale_release_stability }}"
+    tailscale_authkey: "{{ tailscale_resolved_authkey }}"
+    tailscale_up_skip: "{{ tailscale_resolved_authkey | length == 0 }}"
+    tailscale_args: "{{ tailscale_resolved_args | join(' ') }}"
+    tailscale_tags: "{{ tailscale_tags }}"
+    tailscale_up_timeout: "{{ tailscale_up_timeout }}"
+    tailscale_oauth_ephemeral: "{{ tailscale_oauth_ephemeral }}"
+    tailscale_oauth_preauthorized: "{{ tailscale_oauth_preauthorized }}"
+    verbose: "{{ tailscale_verbose }}"
+    insecurely_log_authkey: "{{ tailscale_insecurely_log_authkey }}"
+    auth_key_in_state: "{{ tailscale_auth_key_in_state }}"
+    tailscale_manage_binaries_skip: "{{ tailscale_manage_binaries_skip }}"
+  no_log: "{{ not tailscale_insecurely_log_authkey }}"
+
+- name: Check Tailscale connection status
+  ansible.builtin.command:
+    cmd: tailscale status --json
+  register: tailscale_connection_status
+  changed_when: false
+  failed_when: >-
+    tailscale_connection_status.rc != 0
+    or (tailscale_connection_status.stdout | from_json).BackendState != 'Running'
