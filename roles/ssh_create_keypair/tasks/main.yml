@@ -30,10 +30,11 @@
   register: ssh_public_key
   when: ssh_public_key_stat.stat.exists
 
-- name: Upload public key to GitHub
-  community.general.github_key:
-    token: "{{ github_token }}"
-    name: "{{ ssh_key_user }}@{{ host_name }}"
-    pubkey: "{{ ssh_public_key.content | b64decode }}"
-    state: present
-  when: ssh_public_key_stat.stat.exists
+# Removed as niot every key created with this role should be uploaded to GitHub.
+#- name: Upload public key to GitHub
+#  community.general.github_key:
+#    token: "{{ github_token }}"
+#    name: "{{ ssh_key_user }}@{{ host_name }}"
+#    pubkey: "{{ ssh_public_key.content | b64decode }}"
+#    state: present
+#  when: ssh_public_key_stat.stat.exists

@@ -5,6 +5,7 @@
   vars_prompt:
     - name: host_name
       prompt: "Enter the hostname for the system"
+      private: no
 
   tasks:
     - name: Set system hostname
@@ -38,18 +39,10 @@
         comment: "skrones@{{ inventory_hostname }}"
         regenerate: never
 
-    # Needs to be created
-    #- role: ssh_key_sync
-    #  vars:
-    #    ssh_key_user: ansible
-    #    comment: "ansible@{{ inventory_hostname }}"
-    
-    # Needs to be created
-    # - role: ssh_key_upload
-    #  vars:
-    #    ssh_key_user: skrones
-    #    comment: "skrones@{{ inventory_hostname }}"
+    - role: ssh_sync_authorised-users
+      vars: 
+        ssh_key_user: ansible
+        github_key_title_prefix: "ansible@"
 
     # Needs to be created
     #- role: sshd_configure
-    

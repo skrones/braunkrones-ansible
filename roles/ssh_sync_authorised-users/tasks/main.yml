@@ -1,0 +1,51 @@
+- name: Look up target user
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ ssh_key_user }}"
+
+- name: Set GitHub key title prefix
+  ansible.builtin.set_fact:
+    github_key_title_prefix_resolved: "{{ github_key_title_prefix | default(ssh_key_user ~ '@') }}"
+
+- name: Ensure target user's .ssh directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts.getent_passwd[ssh_key_user][4] }}/.ssh"
+    state: directory
+    owner: "{{ ssh_key_user }}"
+    mode: "0700"
+
+- name: Download SSH keys from GitHub
+  ansible.builtin.uri:
+    url: "{{ github_keys_api_url | default('https://api.github.com/user/keys') }}"
+    method: GET
+    headers:
+      Accept: application/vnd.github+json
+      Authorization: "Bearer {{ github_token }}"
+    return_content: true
+    status_code: 200
+  register: github_ssh_keys_response
+  no_log: true
+
+- name: Select SSH keys matching title prefix
+  ansible.builtin.set_fact:
+    github_ssh_authorized_keys: >-
+      {{
+        github_ssh_keys_response.json
+        | selectattr('title', 'defined')
+        | selectattr('title', 'match', '^' ~ (github_key_title_prefix_resolved | regex_escape))
+        | map(attribute='key')
+        | unique
+        | list
+      }}
+
+- name: Fail when no matching GitHub SSH keys were found
+  ansible.builtin.fail:
+    msg: "No GitHub SSH keys found with titles beginning with '{{ github_key_title_prefix_resolved }}'."
+  when: github_ssh_authorized_keys | length == 0
+
+- name: Configure authorized keys from GitHub
+  ansible.builtin.copy:
+    dest: "{{ ansible_facts.getent_passwd[ssh_key_user][4] }}/.ssh/authorized_keys"
+    content: "{{ github_ssh_authorized_keys | join('\n') }}\n"
+    owner: "{{ ssh_key_user }}"
+    mode: "0600"
