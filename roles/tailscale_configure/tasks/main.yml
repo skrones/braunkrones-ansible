@@ -15,6 +15,14 @@
         + tailscale_extra_args
       }}
 
+- name: Resolve Tailscale collection inputs
+  ansible.builtin.set_fact:
+    tailscale_collection_tags: "{{ tailscale_tags }}"
+    tailscale_collection_up_timeout: "{{ tailscale_up_timeout }}"
+    tailscale_collection_oauth_ephemeral: "{{ tailscale_oauth_ephemeral }}"
+    tailscale_collection_oauth_preauthorized: "{{ tailscale_oauth_preauthorized }}"
+    tailscale_collection_manage_binaries_skip: "{{ tailscale_manage_binaries_skip }}"
+
 - name: Install and configure Tailscale
   ansible.builtin.include_role:
     name: artis3n.tailscale.machine
@@ -24,14 +32,14 @@
     tailscale_authkey: "{{ tailscale_resolved_authkey }}"
     tailscale_up_skip: "{{ tailscale_resolved_authkey | length == 0 }}"
     tailscale_args: "{{ tailscale_resolved_args | join(' ') }}"
-    tailscale_tags: "{{ tailscale_tags }}"
-    tailscale_up_timeout: "{{ tailscale_up_timeout }}"
-    tailscale_oauth_ephemeral: "{{ tailscale_oauth_ephemeral }}"
-    tailscale_oauth_preauthorized: "{{ tailscale_oauth_preauthorized }}"
+    tailscale_tags: "{{ tailscale_collection_tags }}"
+    tailscale_up_timeout: "{{ tailscale_collection_up_timeout }}"
+    tailscale_oauth_ephemeral: "{{ tailscale_collection_oauth_ephemeral }}"
+    tailscale_oauth_preauthorized: "{{ tailscale_collection_oauth_preauthorized }}"
     verbose: "{{ tailscale_verbose }}"
     insecurely_log_authkey: "{{ tailscale_insecurely_log_authkey }}"
     auth_key_in_state: "{{ tailscale_auth_key_in_state }}"
-    tailscale_manage_binaries_skip: "{{ tailscale_manage_binaries_skip }}"
+    tailscale_manage_binaries_skip: "{{ tailscale_collection_manage_binaries_skip }}"
   no_log: "{{ not tailscale_insecurely_log_authkey }}"
 
 - name: Check Tailscale connection status
