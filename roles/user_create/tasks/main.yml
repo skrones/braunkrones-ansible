@@ -7,11 +7,27 @@
     append: true
     create_home: "{{ create_home | default(true) }}"
 
+- name: Look up created user
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ user_name }}"
+  when: create_home | default(true) | bool
+
+- name: Ensure created user's home directory ownership is correct
+  ansible.builtin.file:
+    path: "{{ ansible_facts.getent_passwd[user_name][4] }}"
+    state: directory
+    owner: "{{ user_name }}"
+    group: "{{ ansible_facts.getent_passwd[user_name][2] }}"
+    mode: "{{ user_home_mode | default('0750') }}"
+  when: create_home | default(true) | bool
 
 - name: configures sudo policy for the user
   ansible.builtin.copy:
     dest: "/etc/sudoers.d/{{ user_name }}"
-    content: "{{ sudo_policy }}"
+    content: "{{ sudo_policy }}\n"
     owner: root
     group: root
     mode: '0440'
+    validate: /usr/sbin/visudo -cf %s
+  when: sudo_policy is defined
