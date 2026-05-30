@@ -48,7 +48,7 @@
       vars:
         tailscale_authkey: "{{ tailscale_oauth_client_secret }}"
         tailscale_tags:
-         - ansible
+          - ansible
         tailscale_oauth_ephemeral: false
         tailscale_oauth_preauthorized: true
 
