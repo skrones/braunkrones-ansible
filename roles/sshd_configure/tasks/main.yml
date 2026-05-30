@@ -1,0 +1,37 @@
+- name: Check default SSHD config
+  ansible.builtin.slurp:
+    src: /etc/ssh/sshd_config
+  register: sshd_default_config
+
+- name: Ensure default SSHD config loads drop-in files
+  ansible.builtin.assert:
+    that:
+      - sshd_default_config.content | b64decode is search('(?m)^\s*Include\s+/etc/ssh/sshd_config\.d/\*\.conf\s*$')
+    fail_msg: "Refusing to edit /etc/ssh/sshd_config. Add 'Include /etc/ssh/sshd_config.d/*.conf' to enable drop-in hardening."
+
+- name: Ensure SSHD drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Configure SSHD hardening drop-in
+  ansible.builtin.copy:
+    dest: "{{ sshd_hardening_drop_in_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+    validate: /usr/sbin/sshd -t -f %s
+    content: |
+      # Managed by Ansible role sshd_configure.
+      {% for option in sshd_hardening_options | dict2items %}
+      {{ option.key }} {{ option.value }}
+      {% endfor %}
+  notify: Reload SSHD
+
+- name: Validate effective SSHD configuration
+  ansible.builtin.command:
+    cmd: /usr/sbin/sshd -t
+  changed_when: false
