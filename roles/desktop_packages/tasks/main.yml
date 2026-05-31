@@ -1,0 +1,75 @@
+- name: Resolve desktop package lists
+  ansible.builtin.set_fact:
+    desktop_packages_effective_packages: >-
+      {{
+        (desktop_packages_default_packages + desktop_packages_extra_packages)
+        | unique
+        | reject('in', desktop_packages_excluded_packages)
+        | list
+      }}
+    desktop_packages_effective_groups: >-
+      {{
+        (desktop_packages_default_groups + desktop_packages_extra_groups)
+        | unique
+        | reject('in', desktop_packages_excluded_groups)
+        | list
+      }}
+
+- name: Install RPM packages
+  ansible.builtin.dnf5:
+    name: "{{ desktop_packages_effective_packages }}"
+    state: "{{ desktop_packages_state }}"
+    update_cache: "{{ desktop_packages_update_cache }}"
+  when: desktop_packages_effective_packages | length > 0
+
+- name: Install DNF groups
+  ansible.builtin.dnf5:
+    name: "{{ desktop_packages_effective_groups }}"
+    state: "{{ desktop_packages_state }}"
+    update_cache: false
+  when: desktop_packages_effective_groups | length > 0
+
+- name: Enable snapd services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop: "{{ desktop_packages_snapd_services }}"
+  when: desktop_packages_manage_snapd
+
+# - name: Create classic snap compatibility link
+# 	ansible.builtin.file:
+# 		src: "{{ desktop_packages_classic_snap_target }}"
+# 		dest: "{{ desktop_packages_classic_snap_link_path }}"
+# 		state: link
+# 	when:
+# 		- desktop_packages_manage_snapd
+# 		- desktop_packages_create_classic_snap_link
+
+- name: Enable libvirt services
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop: "{{ desktop_packages_libvirt_services }}"
+  when: desktop_packages_manage_virtualization
+
+# - name: Require desktop user for virtualization group membership
+# 	ansible.builtin.assert:
+# 		that:
+# 			- desktop_user | length > 0
+# 		fail_msg: >-
+# 			Set desktop_user to the local desktop account before enabling
+# 			desktop_packages_manage_virtualization_user.
+# 	when:
+# 		- desktop_packages_manage_virtualization
+# 		- desktop_packages_manage_virtualization_user
+
+# - name: Add desktop user to libvirt groups
+# 	ansible.builtin.user:
+# 		name: "{{ desktop_user }}"
+# 		groups: "{{ desktop_packages_libvirt_groups | join(',') }}"
+# 		append: true
+# 	when:
+# 		- desktop_packages_manage_virtualization
+# 		- desktop_packages_manage_virtualization_user

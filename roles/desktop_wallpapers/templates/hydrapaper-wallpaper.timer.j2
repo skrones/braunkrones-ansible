@@ -1,0 +1,10 @@
+[Unit]
+Description=Switch wallpaper with HydraPaper on a schedule
+
+[Timer]
+OnBootSec={{ desktop_wallpapers_hydrapaper_on_boot }}
+OnUnitActiveSec={{ desktop_wallpapers_hydrapaper_on_unit_active }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

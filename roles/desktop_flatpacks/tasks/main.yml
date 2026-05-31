@@ -1,0 +1,25 @@
+- name: Resolve desktop Flatpak list
+  ansible.builtin.set_fact:
+    desktop_flatpacks_effective_flatpaks: >-
+      {{
+        (desktop_flatpacks_default_flatpaks + desktop_flatpacks_extra_flatpaks)
+        | unique
+        | reject('in', desktop_flatpacks_excluded_flatpaks)
+        | list
+      }}
+
+- name: Enable Flathub remote
+  community.general.flatpak_remote:
+    name: "{{ desktop_flatpacks_flathub_name }}"
+    state: present
+    flatpakrepo_url: "{{ desktop_flatpacks_flathub_url }}"
+    method: "{{ desktop_flatpacks_method }}"
+  when: desktop_flatpacks_manage_flathub
+
+- name: Manage desktop Flatpaks
+  community.general.flatpak:
+    name: "{{ item }}"
+    state: "{{ desktop_flatpacks_state }}"
+    method: "{{ desktop_flatpacks_method }}"
+  loop: "{{ desktop_flatpacks_effective_flatpaks }}"
+  when: desktop_flatpacks_effective_flatpaks | length > 0

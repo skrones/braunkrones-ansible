@@ -1,0 +1,8 @@
+[Unit]
+Description=Switch wallpaper with HydraPaper
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+WorkingDirectory={{ desktop_wallpapers_user_home }}
+ExecStart=/usr/bin/flatpak run org.gabmus.hydrapaper --random

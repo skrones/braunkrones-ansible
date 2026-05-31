@@ -1,0 +1,30 @@
+desktop_flatpacks_default_flatpaks:
+  - org.gnome.Extensions
+  - com.mattjakeman.ExtensionManager
+  - org.gabmus.hydrapaper
+  - org.videolan.VLC
+  - md.obsidian.Obsidian
+  - com.obsproject.Studio
+  - org.gimp.GIMP
+  - org.inkscape.Inkscape
+  - org.kde.krita
+  - org.blender.Blender
+  - org.darktable.Darktable
+  - org.audacityteam.Audacity
+  - org.kde.kdenlive
+  - org.onlyoffice.desktopeditors
+  - com.github.tchx84.Flatseal
+  - org.qbittorrent.qBittorrent
+  - org.musescore.MuseScore
+  - org.torproject.torbrowser-launcher
+  - org.localsend.localsend_app
+
+desktop_flatpacks_extra_flatpaks: []
+desktop_flatpacks_excluded_flatpaks: []
+
+desktop_flatpacks_state: present
+desktop_flatpacks_method: system
+
+desktop_flatpacks_manage_flathub: true
+desktop_flatpacks_flathub_name: flathub
+desktop_flatpacks_flathub_url: https://dl.flathub.org/repo/flathub.flatpakrepo

@@ -1,0 +1,10 @@
+[Unit]
+Description=Sync Google Photos desktop wallpapers on a schedule
+
+[Timer]
+OnBootSec={{ desktop_wallpapers_sync_on_boot }}
+OnUnitActiveSec={{ desktop_wallpapers_sync_on_unit_active }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target
