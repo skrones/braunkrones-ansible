@@ -5,6 +5,7 @@ desktop_packages_default_packages:
   - snapd
   - qdmr
   - chezmoi
+  - gnome-tweaks
 
 desktop_packages_extra_packages: []
 desktop_packages_excluded_packages: []
