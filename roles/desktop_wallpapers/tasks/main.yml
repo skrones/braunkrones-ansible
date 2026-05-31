@@ -7,27 +7,6 @@
       Set desktop_user to the local desktop account before enabling
       desktop_wallpapers.
 
-- name: Require Google Photos album when fetch is enabled
-  ansible.builtin.assert:
-    that:
-      - desktop_wallpapers_google_photos_album | length > 0
-    fail_msg: >-
-      Set desktop_wallpapers_google_photos_album to the Google Photos album
-      name to sync with rclone.
-  when: desktop_wallpapers_fetch_enabled
-
-- name: Require rclone config content when managed config is enabled
-  ansible.builtin.assert:
-    that:
-      - desktop_wallpapers_rclone_config_content | length > 0
-    fail_msg: >-
-      Set vault_desktop_wallpapers_rclone_config_content in secrets.yml, or set
-      desktop_wallpapers_manage_rclone_config to false if the rclone config is
-      managed outside this role.
-  when:
-    - desktop_wallpapers_fetch_enabled
-    - desktop_wallpapers_manage_rclone_config
-
 - name: Look up desktop user
   ansible.builtin.getent:
     database: passwd
@@ -42,7 +21,6 @@
       XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts.getent_passwd[desktop_user][1] }}"
       DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ ansible_facts.getent_passwd[desktop_user][1] }}/bus"
       HOME: "{{ desktop_wallpapers_home }}"
-      RCLONE_CONFIG: "{{ desktop_wallpapers_rclone_config_path }}"
 
 - name: Ensure wallpaper directories exist
   ansible.builtin.file:
@@ -67,25 +45,6 @@
     - "{{ desktop_wallpapers_user_home }}/.config/systemd"
     - "{{ desktop_wallpapers_user_home }}/.config/systemd/user"
 
-- name: Ensure rclone config directory exists
-  ansible.builtin.file:
-    path: "{{ desktop_wallpapers_rclone_config_path | dirname }}"
-    state: directory
-    owner: "{{ desktop_user }}"
-    group: "{{ desktop_wallpapers_user_gid }}"
-    mode: "{{ desktop_wallpapers_rclone_config_directory_mode }}"
-  when: desktop_wallpapers_manage_rclone_config
-
-- name: Install desktop user rclone config
-  ansible.builtin.copy:
-    dest: "{{ desktop_wallpapers_rclone_config_path }}"
-    content: "{{ desktop_wallpapers_rclone_config_content }}"
-    owner: "{{ desktop_user }}"
-    group: "{{ desktop_wallpapers_user_gid }}"
-    mode: "{{ desktop_wallpapers_rclone_config_file_mode }}"
-  when: desktop_wallpapers_manage_rclone_config
-  no_log: true
-
 - name: Enable lingering for desktop user
   ansible.builtin.command:
     cmd: "loginctl enable-linger {{ desktop_user }}"
@@ -97,26 +56,6 @@
     name: "user@{{ ansible_facts.getent_passwd[desktop_user][1] }}.service"
     state: started
   when: desktop_wallpapers_start_user_manager
-
-- name: Install Google Photos wallpaper sync service
-  ansible.builtin.template:
-    src: google-photos-wallpapers-sync.service.j2
-    dest: "{{ desktop_wallpapers_user_home }}/.config/systemd/user/{{ desktop_wallpapers_sync_service_name }}"
-    owner: "{{ desktop_user }}"
-    group: "{{ desktop_wallpapers_user_gid }}"
-    mode: "{{ desktop_wallpapers_unit_file_mode }}"
-  register: desktop_wallpapers_sync_service
-  when: desktop_wallpapers_fetch_enabled
-
-- name: Install Google Photos wallpaper sync timer
-  ansible.builtin.template:
-    src: google-photos-wallpapers-sync.timer.j2
-    dest: "{{ desktop_wallpapers_user_home }}/.config/systemd/user/{{ desktop_wallpapers_sync_timer_name }}"
-    owner: "{{ desktop_user }}"
-    group: "{{ desktop_wallpapers_user_gid }}"
-    mode: "{{ desktop_wallpapers_unit_file_mode }}"
-  register: desktop_wallpapers_sync_timer
-  when: desktop_wallpapers_fetch_enabled
 
 - name: Install HydraPaper wallpaper service
   ansible.builtin.template:
@@ -144,21 +83,8 @@
   become_user: "{{ desktop_user }}"
   environment: "{{ desktop_wallpapers_user_systemd_environment }}"
   when: >-
-    desktop_wallpapers_sync_service.changed | default(false)
-    or desktop_wallpapers_sync_timer.changed | default(false)
-    or desktop_wallpapers_hydrapaper_service.changed | default(false)
+    desktop_wallpapers_hydrapaper_service.changed | default(false)
     or desktop_wallpapers_hydrapaper_timer.changed | default(false)
-
-- name: Enable Google Photos wallpaper sync timer
-  ansible.builtin.systemd_service:
-    name: "{{ desktop_wallpapers_sync_timer_name }}"
-    enabled: true
-    state: "{{ desktop_wallpapers_start_timers | ternary('started', omit) }}"
-    scope: user
-  become: true
-  become_user: "{{ desktop_user }}"
-  environment: "{{ desktop_wallpapers_user_systemd_environment }}"
-  when: desktop_wallpapers_fetch_enabled
 
 - name: Enable HydraPaper wallpaper timer
   ansible.builtin.systemd_service:

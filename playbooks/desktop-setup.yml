@@ -1,16 +1,10 @@
 - hosts: localhost
   become: true
-  vars_files:
-    - ../secrets.yml
   vars:
     desktop_wallpapers_enabled: true
-    desktop_wallpapers_rclone_config_content: "{{ vault_desktop_wallpapers_rclone_config_content | default('') }}"
   vars_prompt:
     - name: desktop_user
       prompt: "Enter the local desktop user we are configuring"
-      private: no
-    - name: desktop_wallpapers_google_photos_album
-      prompt: "Enter the Google Photos album to sync for desktop wallpapers"
       private: no
 
   roles:

@@ -26,7 +26,7 @@ Set `desktop_user` when virtualization user membership is enabled. Group members
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `desktop_packages_default_packages` | `code`, `steam`, `zsh`, `snapd`, `qdmr`, `chezmoi`, `rclone` | RPM packages installed by default. Required repositories must already be configured. |
+| `desktop_packages_default_packages` | `code`, `steam`, `zsh`, `snapd`, `qdmr`, `chezmoi` | RPM packages installed by default. Required repositories must already be configured. |
 | `desktop_packages_extra_packages` | `[]` | Additional RPM packages to install. |
 | `desktop_packages_excluded_packages` | `[]` | Packages removed from the combined default and extra package list. |
 | `desktop_packages_default_groups` | `@virtualization` | DNF groups installed by default. |

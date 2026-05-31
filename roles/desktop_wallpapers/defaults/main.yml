@@ -3,27 +3,12 @@ desktop_wallpapers_enabled: true
 desktop_wallpapers_directory: "{{ desktop_wallpapers_home }}/Pictures/Wallpapers"
 desktop_wallpapers_home: "{{ ansible_facts.getent_passwd[desktop_user][4] }}"
 
-desktop_wallpapers_fetch_enabled: true
-desktop_wallpapers_rclone_remote: gphotos
-desktop_wallpapers_google_photos_album: ""
-desktop_wallpapers_rclone_extra_args: []
-desktop_wallpapers_manage_rclone_config: true
-desktop_wallpapers_rclone_config_content: ""
-desktop_wallpapers_rclone_config_path: "{{ desktop_wallpapers_home }}/.config/rclone/rclone.conf"
-desktop_wallpapers_rclone_config_directory_mode: '0700'
-desktop_wallpapers_rclone_config_file_mode: '0600'
-
 desktop_wallpapers_manage_user_linger: true
 desktop_wallpapers_start_user_manager: true
 desktop_wallpapers_start_timers: true
 desktop_wallpapers_config_directory_mode: '0700'
 desktop_wallpapers_wallpaper_directory_mode: '0750'
 desktop_wallpapers_unit_file_mode: '0644'
-
-desktop_wallpapers_sync_service_name: google-photos-wallpapers-sync.service
-desktop_wallpapers_sync_timer_name: google-photos-wallpapers-sync.timer
-desktop_wallpapers_sync_on_boot: 5m
-desktop_wallpapers_sync_on_unit_active: 6h
 
 desktop_wallpapers_hydrapaper_service_name: hydrapaper-wallpaper.service
 desktop_wallpapers_hydrapaper_timer_name: hydrapaper-wallpaper.timer
