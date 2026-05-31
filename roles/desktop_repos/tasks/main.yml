@@ -1,0 +1,22 @@
+- name: Configure Microsoft VS Code repository
+  ansible.builtin.yum_repository:
+    name: "{{ desktop_repos_vscode_name }}"
+    description: "{{ desktop_repos_vscode_description }}"
+    baseurl: "{{ desktop_repos_vscode_baseurl }}"
+    enabled: "{{ desktop_repos_vscode_enabled }}"
+    gpgcheck: "{{ desktop_repos_vscode_gpgcheck }}"
+    gpgkey: "{{ desktop_repos_vscode_gpgkey }}"
+    state: "{{ desktop_repos_state }}"
+  when:
+    - desktop_repos_manage_vscode
+    - ansible_facts.os_family == 'RedHat'
+
+- name: Install RPM Fusion release repositories
+  ansible.builtin.dnf5:
+    name: "{{ desktop_repos_rpmfusion_release_packages }}"
+    state: "{{ desktop_repos_state }}"
+    disable_gpg_check: "{{ desktop_repos_rpmfusion_disable_gpg_check }}"
+    update_cache: "{{ desktop_repos_update_cache }}"
+  when:
+    - desktop_repos_manage_rpmfusion
+    - ansible_facts.distribution == 'Fedora'

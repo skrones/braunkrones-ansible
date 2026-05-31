@@ -1,0 +1,17 @@
+desktop_repos_manage_vscode: true
+desktop_repos_manage_rpmfusion: true
+
+desktop_repos_state: present
+desktop_repos_update_cache: true
+
+desktop_repos_vscode_name: vscode
+desktop_repos_vscode_description: Visual Studio Code
+desktop_repos_vscode_baseurl: https://packages.microsoft.com/yumrepos/vscode
+desktop_repos_vscode_gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+desktop_repos_vscode_gpgcheck: true
+desktop_repos_vscode_enabled: true
+
+desktop_repos_rpmfusion_release_packages:
+  - https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm
+  - https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm
+desktop_repos_rpmfusion_disable_gpg_check: true
