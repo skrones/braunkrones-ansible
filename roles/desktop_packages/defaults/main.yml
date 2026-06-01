@@ -6,6 +6,7 @@ desktop_packages_default_packages:
   - qdmr
   - chezmoi
   - gnome-tweaks
+  - firewall-config
 
 desktop_packages_extra_packages: []
 desktop_packages_excluded_packages: []
