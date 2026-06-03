@@ -111,45 +111,6 @@
   environment: "{{ download_settings_user_environment }}"
   changed_when: true
 
-- name: Refresh GNOME extensions in active session
-  ansible.builtin.shell: |
-    set -euo pipefail
-
-    extension_file="{{ download_settings_source_path.stdout }}/{{ download_settings_gnome_extensions_file }}"
-    user_runtime_dir="/run/user/{{ download_settings_user_uid }}"
-    session_bus="$user_runtime_dir/bus"
-
-    if [[ ! -S "$session_bus" ]]; then
-      printf 'No active GNOME session bus found at %s; extension changes will take effect at next login.\n' "$session_bus" >&2
-      exit 0
-    fi
-
-    export XDG_RUNTIME_DIR="$user_runtime_dir"
-    export DBUS_SESSION_BUS_ADDRESS="unix:path=$session_bus"
-
-    enabled_extensions="$({
-      sed -e 's/#.*//' -e '/^[[:space:]]*$/d' "$extension_file" | sort -u |
-        python3 - <<'PY'
-    import sys
-
-    extensions = [line.strip() for line in sys.stdin if line.strip()]
-    print("[" + ", ".join(repr(extension) for extension in extensions) + "]")
-    PY
-    })"
-
-    gsettings set org.gnome.shell enabled-extensions "$enabled_extensions"
-
-    sed -e 's/#.*//' -e '/^[[:space:]]*$/d' "$extension_file" | sort -u |
-      while read -r extension; do
-        gnome-extensions enable "$extension"
-      done
-  args:
-    executable: /usr/bin/bash
-  become: true
-  become_user: "{{ download_settings_user }}"
-  environment: "{{ download_settings_user_environment }}"
-  changed_when: true
-
 - name: Apply chezmoi settings
   ansible.builtin.command:
     cmd: chezmoi apply --force
@@ -157,3 +118,21 @@
   become_user: "{{ download_settings_user }}"
   environment: "{{ download_settings_user_environment }}"
   changed_when: true
+
+- name: Check active download settings user sessions
+  ansible.builtin.command:
+    argv:
+      - loginctl
+      - show-user
+      - "{{ download_settings_user }}"
+      - --property=Sessions
+      - --value
+  register: download_settings_user_sessions
+  changed_when: false
+
+- name: Queue download settings user session restart
+  ansible.builtin.command:
+    cmd: /usr/bin/true
+  when: download_settings_user_sessions.stdout | length > 0
+  changed_when: true
+  notify: Schedule download settings user session restart

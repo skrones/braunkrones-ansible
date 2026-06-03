@@ -1,0 +1,9 @@
+- name: Schedule download settings user session restart
+  ansible.builtin.shell: |
+    systemd-run \
+      --unit="download-settings-terminate-{{ download_settings_user }}-$(date +%s)" \
+      --on-active=10s \
+      /usr/bin/loginctl terminate-user "{{ download_settings_user }}"
+  args:
+    executable: /usr/bin/bash
+  changed_when: true

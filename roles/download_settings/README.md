@@ -32,6 +32,7 @@ extension list, enables each listed extension, and runs `chezmoi apply --force`
 every time it is called. Missing GNOME extension bundles are downloaded from
 extensions.gnome.org and installed with `gnome-extensions install --force`.
 Extra user-installed extensions are removed, while system extensions are left
-installed and omitted from the enabled extension list. When the target user has
-an active GNOME session, the role refreshes enabled extensions on that session's
-D-Bus bus so the changes do not require a manual logout.
+installed and omitted from the enabled extension list. If the target user has
+active logind sessions, the role notifies a handler that schedules a delayed
+`loginctl terminate-user` at the end of the play so GNOME Shell starts fresh on
+the next login.
