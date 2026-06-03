@@ -43,15 +43,10 @@
 
 - name: Save enabled GNOME extensions
   ansible.builtin.copy:
-    content: >-
-      {{
-        (
-          upload_settings_gnome_extensions.stdout
-          | regex_replace('^@as \\[\\]$', '[]')
-          | from_yaml
-          | join("\n")
-        ) ~ "\n"
-      }}
+    content: |
+      {% for extension in upload_settings_gnome_extensions.stdout | regex_replace('^@as \\[\\]$', '[]') | from_yaml %}
+      {{ extension }}
+      {% endfor %}
     dest: "{{ upload_settings_source_path.stdout }}/{{ upload_settings_gnome_extensions_file }}"
     owner: "{{ upload_settings_user }}"
     group: "{{ upload_settings_user_group }}"
