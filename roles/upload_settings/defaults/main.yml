@@ -1,0 +1,9 @@
+upload_settings_user: "{{ desktop_user | default('') }}"
+
+upload_settings_file_mode: '0644'
+
+upload_settings_gnome_extensions_file: gnome-extensions.txt
+
+upload_settings_dump_script_path: dump-gnome-settings.sh
+
+upload_settings_git_commit_message: "Update desktop settings"

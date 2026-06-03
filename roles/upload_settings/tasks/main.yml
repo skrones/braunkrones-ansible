@@ -1,0 +1,129 @@
+- name: Require upload settings inputs
+  ansible.builtin.assert:
+    that:
+      - upload_settings_user is defined
+      - upload_settings_user | length > 0
+    fail_msg: >-
+      Set upload_settings_user or desktop_user before running upload_settings.
+
+- name: Look up upload settings user
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ upload_settings_user }}"
+
+- name: Set upload settings user environment
+  ansible.builtin.set_fact:
+    upload_settings_user_group: "{{ ansible_facts.getent_passwd[upload_settings_user][2] }}"
+    upload_settings_user_environment:
+      HOME: "{{ ansible_facts.getent_passwd[upload_settings_user][4] }}"
+
+- name: Read chezmoi source path
+  ansible.builtin.command:
+    cmd: chezmoi source-path
+  become: true
+  become_user: "{{ upload_settings_user }}"
+  environment: "{{ upload_settings_user_environment }}"
+  register: upload_settings_source_path
+  changed_when: false
+
+- name: Export enabled GNOME extensions
+  ansible.builtin.command:
+    argv:
+      - dbus-run-session
+      - --
+      - gnome-extensions
+      - list
+      - --enabled
+  become: true
+  become_user: "{{ upload_settings_user }}"
+  environment: "{{ upload_settings_user_environment }}"
+  register: upload_settings_gnome_extensions
+  changed_when: false
+
+- name: Save enabled GNOME extensions
+  ansible.builtin.copy:
+    content: "{{ upload_settings_gnome_extensions.stdout }}\n"
+    dest: "{{ upload_settings_source_path.stdout }}/{{ upload_settings_gnome_extensions_file }}"
+    owner: "{{ upload_settings_user }}"
+    group: "{{ upload_settings_user_group }}"
+    mode: "{{ upload_settings_file_mode }}"
+
+- name: Check GNOME settings dump script
+  ansible.builtin.stat:
+    path: "{{ upload_settings_source_path.stdout }}/{{ upload_settings_dump_script_path }}"
+  register: upload_settings_dump_script_stat
+
+- name: Require GNOME settings dump script
+  ansible.builtin.fail:
+    msg: >-
+      {{ upload_settings_source_path.stdout }}/{{ upload_settings_dump_script_path }} was not found.
+  when: not upload_settings_dump_script_stat.stat.exists
+
+- name: Run GNOME settings dump script
+  ansible.builtin.command:
+    argv:
+      - dbus-run-session
+      - --
+      - /usr/bin/env
+      - bash
+      - "{{ upload_settings_dump_script_path }}"
+    chdir: "{{ upload_settings_source_path.stdout }}"
+  become: true
+  become_user: "{{ upload_settings_user }}"
+  environment: "{{ upload_settings_user_environment }}"
+  register: upload_settings_dump_script_result
+  changed_when: upload_settings_dump_script_result.rc == 0
+
+- name: Re-add chezmoi managed files
+  ansible.builtin.command:
+    cmd: chezmoi re-add
+    chdir: "{{ upload_settings_source_path.stdout }}"
+  become: true
+  become_user: "{{ upload_settings_user }}"
+  environment: "{{ upload_settings_user_environment }}"
+  register: upload_settings_chezmoi_re_add
+  changed_when: upload_settings_chezmoi_re_add.rc == 0
+
+- name: Check chezmoi source git status
+  ansible.builtin.command:
+    cmd: git status --porcelain
+    chdir: "{{ upload_settings_source_path.stdout }}"
+  become: true
+  become_user: "{{ upload_settings_user }}"
+  environment: "{{ upload_settings_user_environment }}"
+  register: upload_settings_git_status
+  changed_when: false
+
+- name: Commit chezmoi source changes
+  when: upload_settings_git_status.stdout | length > 0
+  block:
+    - name: Stage chezmoi source changes
+      ansible.builtin.command:
+        cmd: git add -A
+        chdir: "{{ upload_settings_source_path.stdout }}"
+      become: true
+      become_user: "{{ upload_settings_user }}"
+      environment: "{{ upload_settings_user_environment }}"
+      changed_when: true
+
+    - name: Create chezmoi source commit
+      ansible.builtin.command:
+        argv:
+          - git
+          - commit
+          - -m
+          - "{{ upload_settings_git_commit_message }}"
+        chdir: "{{ upload_settings_source_path.stdout }}"
+      become: true
+      become_user: "{{ upload_settings_user }}"
+      environment: "{{ upload_settings_user_environment }}"
+      changed_when: true
+
+- name: Push chezmoi source changes
+  ansible.builtin.command:
+    cmd: git push
+    chdir: "{{ upload_settings_source_path.stdout }}"
+  become: true
+  become_user: "{{ upload_settings_user }}"
+  environment: "{{ upload_settings_user_environment }}"
+  changed_when: true
