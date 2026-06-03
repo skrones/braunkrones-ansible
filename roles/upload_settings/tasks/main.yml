@@ -26,14 +26,15 @@
   register: upload_settings_source_path
   changed_when: false
 
-- name: Export enabled GNOME extensions
+- name: Read enabled GNOME extensions
   ansible.builtin.command:
     argv:
       - dbus-run-session
       - --
-      - gnome-extensions
-      - list
-      - --enabled
+      - gsettings
+      - get
+      - org.gnome.shell
+      - enabled-extensions
   become: true
   become_user: "{{ upload_settings_user }}"
   environment: "{{ upload_settings_user_environment }}"
@@ -42,7 +43,15 @@
 
 - name: Save enabled GNOME extensions
   ansible.builtin.copy:
-    content: "{{ upload_settings_gnome_extensions.stdout }}\n"
+    content: >-
+      {{
+        (
+          upload_settings_gnome_extensions.stdout
+          | regex_replace('^@as \\[\\]$', '[]')
+          | from_yaml
+          | join('\n')
+        ) ~ '\n'
+      }}
     dest: "{{ upload_settings_source_path.stdout }}/{{ upload_settings_gnome_extensions_file }}"
     owner: "{{ upload_settings_user }}"
     group: "{{ upload_settings_user_group }}"
