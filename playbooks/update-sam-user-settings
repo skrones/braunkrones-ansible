@@ -1,0 +1,7 @@
+- hosts: localhost
+  become: true
+  vars:
+    upload_settings_user: skrones
+
+  roles:
+    - role: upload_settings
