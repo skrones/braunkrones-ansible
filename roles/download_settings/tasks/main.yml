@@ -41,14 +41,43 @@
     extension_file="{{ download_settings_source_path.stdout }}/{{ download_settings_gnome_extensions_file }}"
     desired_extensions="$(mktemp)"
     installed_extensions="$(mktemp)"
-    trap 'rm -f "$desired_extensions" "$installed_extensions"' EXIT
+    extension_download_dir="$(mktemp -d)"
+    shell_version="$(gnome-shell --version | awk '{ print $3 }')"
+    trap 'rm -f "$desired_extensions" "$installed_extensions"; rm -rf "$extension_download_dir"' EXIT
+
+    install_extension() {
+      extension_bundle="$extension_download_dir/$1.zip"
+
+      python3 -c '
+import json
+import sys
+import urllib.parse
+import urllib.request
+
+uuid, shell_version, extension_bundle = sys.argv[1:]
+base_url = "https://extensions.gnome.org"
+query = urllib.parse.urlencode({"uuid": uuid, "shell_version": shell_version})
+
+with urllib.request.urlopen(f"{base_url}/extension-info/?{query}") as response:
+    extension_info = json.load(response)
+
+download_url = extension_info.get("download_url")
+if not download_url:
+    raise SystemExit(f"No download URL found for {uuid} on GNOME Shell {shell_version}")
+
+with urllib.request.urlopen(urllib.parse.urljoin(base_url, download_url)) as response:
+    with open(extension_bundle, "wb") as bundle:
+        bundle.write(response.read())
+' "$1" "$shell_version" "$extension_bundle"
+
+      gnome-extensions install --force "$extension_bundle"
+    }
 
     sed -e 's/#.*//' -e '/^[[:space:]]*$/d' "$extension_file" | sort -u > "$desired_extensions"
     gnome-extensions list | sort -u > "$installed_extensions"
 
     comm -23 "$installed_extensions" "$desired_extensions" |
       while read -r extension; do
-        gnome-extensions disable "$extension" || true
         uninstall_output="$(gnome-extensions uninstall "$extension" 2>&1)" || {
           if [[ "$uninstall_output" != *"Cannot uninstall system extensions"* ]]; then
             printf '%s\n' "$uninstall_output" >&2
@@ -60,16 +89,16 @@
     comm -13 "$installed_extensions" "$desired_extensions" |
       while read -r extension; do
         printf 'Installing GNOME extension %s\n' "$extension"
-        busctl --user call \
-          org.gnome.Shell.Extensions \
-          /org/gnome/Shell/Extensions \
-          org.gnome.Shell.Extensions \
-          InstallRemoteExtension s "$extension"
+        install_extension "$extension"
       done
 
-    while read -r extension; do
-      gnome-extensions enable "$extension"
-    done < "$desired_extensions"
+    enabled_extensions="$({
+      python3 -c 'import sys
+with open(sys.argv[1], encoding="utf-8") as extension_file:
+    extensions = [line.strip() for line in extension_file if line.strip()]
+print("[" + ", ".join(repr(extension) for extension in extensions) + "]")' "$desired_extensions"
+    })"
+    dbus-run-session -- gsettings set org.gnome.shell enabled-extensions "$enabled_extensions"
   args:
     executable: /usr/bin/bash
   become: true

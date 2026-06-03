@@ -29,5 +29,7 @@ installing `chezmoi`. The target user must already have initialized chezmoi.
 
 The role runs `git pull`, reconciles installed GNOME extensions to match the
 extension list, enables each listed extension, and runs `chezmoi apply` every
-time it is called. GNOME system extensions cannot be uninstalled by users, so
-extras in that category are disabled instead.
+time it is called. Missing GNOME extension bundles are downloaded from
+extensions.gnome.org and installed with `gnome-extensions install --force`.
+Extra user-installed extensions are removed, while system extensions are left
+installed and omitted from the enabled extension list.
