@@ -48,7 +48,7 @@
     install_extension() {
       extension_bundle="$extension_download_dir/$1.zip"
 
-        python3 - "$1" "$shell_version" "$extension_bundle" <<'PY'
+      python3 - "$1" "$shell_version" "$extension_bundle" <<'PY'
     import json
     import sys
     import urllib.parse
@@ -94,13 +94,13 @@
 
     enabled_extensions="$({
       python3 - "$desired_extensions" <<'PY'
-  import sys
+    import sys
 
-  with open(sys.argv[1], encoding="utf-8") as extension_file:
-    extensions = [line.strip() for line in extension_file if line.strip()]
+    with open(sys.argv[1], encoding="utf-8") as extension_file:
+        extensions = [line.strip() for line in extension_file if line.strip()]
 
-  print("[" + ", ".join(repr(extension) for extension in extensions) + "]")
-  PY
+    print("[" + ", ".join(repr(extension) for extension in extensions) + "]")
+    PY
     })"
     dbus-run-session -- gsettings set org.gnome.shell enabled-extensions "$enabled_extensions"
   args:
@@ -112,7 +112,7 @@
 
 - name: Apply chezmoi settings
   ansible.builtin.command:
-    cmd: chezmoi apply
+    cmd: chezmoi apply --force
   become: true
   become_user: "{{ download_settings_user }}"
   environment: "{{ download_settings_user_environment }}"
