@@ -59,6 +59,7 @@
 
     comm -13 "$installed_extensions" "$desired_extensions" |
       while read -r extension; do
+        printf 'Installing GNOME extension %s\n' "$extension"
         busctl --user call \
           org.gnome.Shell.Extensions \
           /org/gnome/Shell/Extensions \
