@@ -1,0 +1,7 @@
+- hosts: localhost
+  become: true
+  vars:
+    download_settings_user: skrones
+
+  roles:
+    - role: download_settings

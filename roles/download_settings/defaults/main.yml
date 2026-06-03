@@ -1,0 +1,3 @@
+download_settings_user: "{{ desktop_user | default('') }}"
+
+download_settings_gnome_extensions_file: gnome-extensions.txt
