@@ -48,27 +48,27 @@
     install_extension() {
       extension_bundle="$extension_download_dir/$1.zip"
 
-      python3 -c '
-import json
-import sys
-import urllib.parse
-import urllib.request
+        python3 - "$1" "$shell_version" "$extension_bundle" <<'PY'
+    import json
+    import sys
+    import urllib.parse
+    import urllib.request
 
-uuid, shell_version, extension_bundle = sys.argv[1:]
-base_url = "https://extensions.gnome.org"
-query = urllib.parse.urlencode({"uuid": uuid, "shell_version": shell_version})
+    uuid, shell_version, extension_bundle = sys.argv[1:]
+    base_url = "https://extensions.gnome.org"
+    query = urllib.parse.urlencode({"uuid": uuid, "shell_version": shell_version})
 
-with urllib.request.urlopen(f"{base_url}/extension-info/?{query}") as response:
-    extension_info = json.load(response)
+    with urllib.request.urlopen(f"{base_url}/extension-info/?{query}") as response:
+      extension_info = json.load(response)
 
-download_url = extension_info.get("download_url")
-if not download_url:
-    raise SystemExit(f"No download URL found for {uuid} on GNOME Shell {shell_version}")
+    download_url = extension_info.get("download_url")
+    if not download_url:
+      raise SystemExit(f"No download URL found for {uuid} on GNOME Shell {shell_version}")
 
-with urllib.request.urlopen(urllib.parse.urljoin(base_url, download_url)) as response:
-    with open(extension_bundle, "wb") as bundle:
+    with urllib.request.urlopen(urllib.parse.urljoin(base_url, download_url)) as response:
+      with open(extension_bundle, "wb") as bundle:
         bundle.write(response.read())
-' "$1" "$shell_version" "$extension_bundle"
+    PY
 
       gnome-extensions install --force "$extension_bundle"
     }
@@ -93,10 +93,14 @@ with urllib.request.urlopen(urllib.parse.urljoin(base_url, download_url)) as res
       done
 
     enabled_extensions="$({
-      python3 -c 'import sys
-with open(sys.argv[1], encoding="utf-8") as extension_file:
+      python3 - "$desired_extensions" <<'PY'
+  import sys
+
+  with open(sys.argv[1], encoding="utf-8") as extension_file:
     extensions = [line.strip() for line in extension_file if line.strip()]
-print("[" + ", ".join(repr(extension) for extension in extensions) + "]")' "$desired_extensions"
+
+  print("[" + ", ".join(repr(extension) for extension in extensions) + "]")
+  PY
     })"
     dbus-run-session -- gsettings set org.gnome.shell enabled-extensions "$enabled_extensions"
   args:
