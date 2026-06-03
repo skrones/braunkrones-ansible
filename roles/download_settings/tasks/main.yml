@@ -1,79 +1,85 @@
 - name: Require download settings inputs
-	ansible.builtin.assert:
-		that:
-			- download_settings_user is defined
-			- download_settings_user | length > 0
-		fail_msg: >-
-			Set download_settings_user or desktop_user before running download_settings.
+  ansible.builtin.assert:
+    that:
+      - download_settings_user is defined
+      - download_settings_user | length > 0
+    fail_msg: >-
+      Set download_settings_user or desktop_user before running download_settings.
 
 - name: Look up download settings user
-	ansible.builtin.getent:
-		database: passwd
-		key: "{{ download_settings_user }}"
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ download_settings_user }}"
 
 - name: Set download settings user environment
-	ansible.builtin.set_fact:
-		download_settings_user_environment:
-			HOME: "{{ ansible_facts.getent_passwd[download_settings_user][4] }}"
+  ansible.builtin.set_fact:
+    download_settings_user_environment:
+      HOME: "{{ ansible_facts.getent_passwd[download_settings_user][4] }}"
 
 - name: Read chezmoi source path
-	ansible.builtin.command:
-		cmd: chezmoi source-path
-	become: true
-	become_user: "{{ download_settings_user }}"
-	environment: "{{ download_settings_user_environment }}"
-	register: download_settings_source_path
-	changed_when: false
+  ansible.builtin.command:
+    cmd: chezmoi source-path
+  become: true
+  become_user: "{{ download_settings_user }}"
+  environment: "{{ download_settings_user_environment }}"
+  register: download_settings_source_path
+  changed_when: false
 
 - name: Pull chezmoi source changes
-	ansible.builtin.command:
-		cmd: git pull
-		chdir: "{{ download_settings_source_path.stdout }}"
-	become: true
-	become_user: "{{ download_settings_user }}"
-	environment: "{{ download_settings_user_environment }}"
-	changed_when: true
+  ansible.builtin.command:
+    cmd: git pull
+    chdir: "{{ download_settings_source_path.stdout }}"
+  become: true
+  become_user: "{{ download_settings_user }}"
+  environment: "{{ download_settings_user_environment }}"
+  changed_when: true
 
 - name: Reconcile GNOME extensions
-	ansible.builtin.shell: |
-		set -euo pipefail
+  ansible.builtin.shell: |
+    set -euo pipefail
 
-		extension_file="{{ download_settings_source_path.stdout }}/{{ download_settings_gnome_extensions_file }}"
-		desired_extensions="$(mktemp)"
-		installed_extensions="$(mktemp)"
-		trap 'rm -f "$desired_extensions" "$installed_extensions"' EXIT
+    extension_file="{{ download_settings_source_path.stdout }}/{{ download_settings_gnome_extensions_file }}"
+    desired_extensions="$(mktemp)"
+    installed_extensions="$(mktemp)"
+    trap 'rm -f "$desired_extensions" "$installed_extensions"' EXIT
 
-		sed -e 's/#.*//' -e '/^[[:space:]]*$/d' "$extension_file" | sort -u > "$desired_extensions"
-		gnome-extensions list | sort -u > "$installed_extensions"
+    sed -e 's/#.*//' -e '/^[[:space:]]*$/d' "$extension_file" | sort -u > "$desired_extensions"
+    gnome-extensions list | sort -u > "$installed_extensions"
 
-		comm -23 "$installed_extensions" "$desired_extensions" |
-			while read -r extension; do
-				gnome-extensions uninstall "$extension"
-			done
+    comm -23 "$installed_extensions" "$desired_extensions" |
+      while read -r extension; do
+        gnome-extensions disable "$extension" || true
+        uninstall_output="$(gnome-extensions uninstall "$extension" 2>&1)" || {
+          if [[ "$uninstall_output" != *"Cannot uninstall system extensions"* ]]; then
+            printf '%s\n' "$uninstall_output" >&2
+            exit 1
+          fi
+        }
+      done
 
-		comm -13 "$installed_extensions" "$desired_extensions" |
-			while read -r extension; do
-				busctl --user call \
-					org.gnome.Shell.Extensions \
-					/org/gnome/Shell/Extensions \
-					org.gnome.Shell.Extensions \
-					InstallRemoteExtension s "$extension"
-			done
+    comm -13 "$installed_extensions" "$desired_extensions" |
+      while read -r extension; do
+        busctl --user call \
+          org.gnome.Shell.Extensions \
+          /org/gnome/Shell/Extensions \
+          org.gnome.Shell.Extensions \
+          InstallRemoteExtension s "$extension"
+      done
 
-		while read -r extension; do
-			gnome-extensions enable "$extension"
-		done < "$desired_extensions"
-	args:
-		executable: /usr/bin/bash
-	become: true
-	become_user: "{{ download_settings_user }}"
-	environment: "{{ download_settings_user_environment }}"
-	changed_when: true
+    while read -r extension; do
+      gnome-extensions enable "$extension"
+    done < "$desired_extensions"
+  args:
+    executable: /usr/bin/bash
+  become: true
+  become_user: "{{ download_settings_user }}"
+  environment: "{{ download_settings_user_environment }}"
+  changed_when: true
 
 - name: Apply chezmoi settings
-	ansible.builtin.command:
-		cmd: chezmoi apply
-	become: true
-	become_user: "{{ download_settings_user }}"
-	environment: "{{ download_settings_user_environment }}"
-	changed_when: true
+  ansible.builtin.command:
+    cmd: chezmoi apply
+  become: true
+  become_user: "{{ download_settings_user }}"
+  environment: "{{ download_settings_user_environment }}"
+  changed_when: true
